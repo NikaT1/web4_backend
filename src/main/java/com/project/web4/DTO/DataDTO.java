@@ -3,15 +3,16 @@ package com.project.web4.DTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
 
 @Data
 @AllArgsConstructor
 public class DataDTO {
-    @NotBlank
+    @NotEmpty(message = "x должен быть задан ")
     private Double x;
-    @NotBlank
+    @NotEmpty(message = "y должен быть задан")
     private Double y;
-    @NotBlank
+    @Positive(message = "r не может быть отрицательным")
     private Double r;
 }

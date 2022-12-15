@@ -2,31 +2,26 @@ package com.project.web4.services;
 
 import com.project.web4.model.User;
 import com.project.web4.repositories.UserRepository;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class UserService implements UserDetailsService {
-
+    @Autowired
     private final UserRepository userRepository;
-
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
-    public User getUserByUsernameAndPassword(String username, String password) {
-        return userRepository.getUserByUsernameAndPassword(username, password);
-    }
-
     public boolean saveUser(User user) {
-        User userFromDB = userRepository.findByUsername(user.getUsername());
-        if (userFromDB != null) {
+        User userFound = userRepository.findByUsername(user.getUsername());
+        if (userFound != null) {
             return false;
         }
         userRepository.save(user);
@@ -35,6 +30,6 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findUserByUsername(username);
+        return userRepository.findByUsername(username);
     }
 }

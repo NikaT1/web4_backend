@@ -1,9 +1,16 @@
 package com.project.web4.model;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
 public class Data implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -18,84 +25,14 @@ public class Data implements Serializable {
     @Column(nullable = false)
     private String time;
     @Column(nullable = false)
-    private String answer;
-    @Column(nullable = false)
-    private String username;
+    private Boolean answer;
+    @ManyToOne
+    private User user;
 
-    public Data(){
-
-    }
-
-    public Data(double x, double y, double r){
+    public Data(double x, double y, double r) {
         this.x = x;
         this.y = y;
         this.r = r;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public Double getX() {
-        return x;
-    }
-
-    public Double getY() {
-        return y;
-    }
-
-    public Double getR() {
-        return r;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public String getAnswer() {
-        return answer;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public void setX(Double x) {
-        this.x = x;
-    }
-
-    public void setY(Double y) {
-        this.y = y;
-    }
-
-    public void setR(Double r) {
-        this.r = r;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
-    }
-
-    public void setAnswer(String answer) {
-        this.answer = answer;
-    }
-
-    private boolean rectangle(double x, double y, double r) {
-        return x <= 0 && x >= -r && y <= 0 && y >= -r/2;
-    }
-
-    private boolean triangle(double x, double y, double r) {
-        return x >= 0 && x <= r && y >= 0 && y <= r - x;
-    }
-
-    private boolean circle(double x, double y, double r) {
-        return x >= 0 && x <= r/2 && y <= 0 && y * y <= -x * x + r/2 * r/2;
-    }
-
-    public void checkAll() {
-        if (rectangle(x, y, r) || triangle(x, y, r) || circle(x, y, r)) {
-            answer = "да";
-        } else answer = "нет";
     }
 
     @Override

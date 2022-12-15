@@ -4,85 +4,61 @@ import com.project.web4.DTO.UserDTO;
 import com.project.web4.config.jwt.JWTProvider;
 import com.project.web4.model.User;
 import com.project.web4.services.UserService;
+import lombok.AllArgsConstructor;
+import lombok.extern.java.Log;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.Base64;
 
+@Log
 @RestController
 @RequestMapping(path = "/api/user")
+@AllArgsConstructor
 public class UserController {
+    @Autowired
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Autowired
     private final UserService userService;
+    @Autowired
+    private final AuthenticationManager authManager;
+    @Autowired
     private final JWTProvider jwtProvider;
-    private final AuthenticationManager authManager = new AuthenticationManager() {
-        @Override
-        public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-            return null;
-        }
-    };
 
-    public UserController(UserService userService, JWTProvider jwtProvider) {
-        this.userService = userService;
-        this.jwtProvider = jwtProvider;
-    }
-
-    @PostMapping("/user")
+    @PostMapping("/check-user")
     private ResponseEntity<String> login(@Valid @RequestBody UserDTO userDTO) {
-        if (checkUserData(userDTO)) {
-            return new ResponseEntity<>("Недопустимое имя или пароль пользователя", HttpStatus.BAD_REQUEST);
-        }
         String username = userDTO.getUsername();
-        String password = encodePassword(userDTO.getPassword());
-        User user = userService.getUserByUsernameAndPassword(username, password);
-        if (user != null) {
-            authManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        try {
+            authManager.authenticate(new UsernamePasswordAuthenticationToken(username, userDTO.getPassword()));
             String token = jwtProvider.generateToken(username);
+            log.info("User passed verification");
             return ResponseEntity.ok(token);
-        } else {
-            return new ResponseEntity<>("Пользователь не найден или пароль введен не верно", HttpStatus.NOT_FOUND);
+        } catch (AuthenticationException e) {
+            log.severe("Failed user authentication: " + e.getMessage());
+            return new ResponseEntity<>("Пользователь не найден или пароль введен не верно", HttpStatus.UNAUTHORIZED);
         }
     }
 
     @PostMapping("/new-user")
     private ResponseEntity<String> register(@Valid @RequestBody UserDTO userDTO) {
-        if (checkUserData(userDTO)) {
-            return new ResponseEntity<>("Недопустимое имя или пароль пользователя", HttpStatus.BAD_REQUEST);
-        }
         String username = userDTO.getUsername();
-        String password = encodePassword(userDTO.getPassword());
+        String password = bCryptPasswordEncoder.encode(userDTO.getPassword());
         User user = new User();
         user.setUsername(username);
         user.setPassword(password);
         if (userService.saveUser(user)) {
-            authManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
             String token = jwtProvider.generateToken(username);
+            log.info("Add new user");
             return ResponseEntity.ok(token);
         } else {
+            log.severe("Failed adding new user");
             return new ResponseEntity<>("Пользователь с данным логином уже существует", HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    private boolean checkUserData(UserDTO userDTO) {
-        return userDTO.getUsername() == null || userDTO.getPassword() == null || userDTO.getUsername().trim().equals("")
-                || userDTO.getPassword().trim().equals("");
-    }
-
-    private String encodePassword(String password) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update(password.getBytes(StandardCharsets.UTF_8));
-            byte[] passwordDigest = md.digest();
-            return new String(Base64.getEncoder().encode(passwordDigest));
-        } catch (Exception e) {
-            throw new RuntimeException("Exception encoding password", e);
         }
     }
 }

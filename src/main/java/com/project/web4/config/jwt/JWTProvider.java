@@ -5,8 +5,6 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,10 +15,11 @@ public class JWTProvider {
 
     @Value("$(jwt.secret)")
     private String jwtSecret;
-    private long jwtValidity = 3600000;
-    private List<String> userRoles = new ArrayList<>();
+    private final long jwtValidity = 3600000;
+    private final List<String> userRoles = new ArrayList<>();
 
     public String generateToken(String username) {
+        log.info("Generate token");
         userRoles.add("User");
         Claims claims = Jwts.claims().setSubject(username);
         claims.put("roles", userRoles);
@@ -38,16 +37,16 @@ public class JWTProvider {
         try {
             Jws<Claims> claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);
             return !claims.getBody().getExpiration().before(new Date());
-        } catch (ExpiredJwtException expEx) {
-            log.severe("Token expired");
-        } catch (UnsupportedJwtException unsEx) {
-            log.severe("Unsupported jwt");
-        } catch (MalformedJwtException mjEx) {
-            log.severe("Malformed jwt");
-        } catch (SignatureException sEx) {
-            log.severe("Invalid signature");
+        } catch (ExpiredJwtException e) {
+            log.severe("Token expired: " + e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            log.severe("Unsupported jwt: " + e.getMessage());
+        } catch (MalformedJwtException e) {
+            log.severe("Malformed jwt: " + e.getMessage());
+        } catch (SignatureException e) {
+            log.severe("Invalid signature: " + e.getMessage());
         } catch (Exception e) {
-            log.severe("invalid token");
+            log.severe("Invalid token: " + e.getMessage());
         }
         return false;
     }
