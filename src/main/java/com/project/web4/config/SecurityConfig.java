@@ -1,5 +1,6 @@
 package com.project.web4.config;
 
+import com.project.web4.config.jwt.AuthenticationEntryPoint;
 import com.project.web4.config.jwt.JWTFilter;
 import com.project.web4.config.jwt.JWTProvider;
 import com.project.web4.services.UserService;
@@ -23,6 +24,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private JWTFilter jwtFilter;
     @Autowired
     private UserService userService;
+    @Autowired
+    private AuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -43,6 +46,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.cors().and().csrf().disable().httpBasic().disable()
+                .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
+                .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
